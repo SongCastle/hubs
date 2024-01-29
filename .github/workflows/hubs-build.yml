@@ -60,5 +60,6 @@ jobs:
           tags: ${{ inputs.registry }}/${{ github.workflow }}:latest,${{ inputs.registry }}/${{ github.workflow }}:${{ github.run_number }}
           cache-from: type=registry,ref=${{ inputs.registry }}/${{ github.workflow }}:buildcache
           cache-to: type=registry,ref=${{ inputs.registry }}/${{ github.workflow }}:buildcache,mode=max
+          provenance: false
           platforms: linux/amd64
           push: true
