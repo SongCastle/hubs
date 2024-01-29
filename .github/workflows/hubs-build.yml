@@ -1,4 +1,4 @@
-name: ce
+name: hubs
 
 on:
   workflow_dispatch:
