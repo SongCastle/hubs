@@ -456,6 +456,24 @@ export default class HubChannel extends EventTarget {
     this.channel.push("kick", { session_id: sessionId });
   };
 
+  trtcUserSig = sessionId => {
+     return new Promise((resolve, reject) => {
+        this.channel
+          .push("trtc_user_sig", { session_id: sessionId })
+          .receive("ok", (data) => {
+            console.log("[trtcUserSig]", data);
+            resolve(data.user_sig);
+          })
+          .receive("error", error => {
+            console.error("[trtcUserSig]", error);
+            reject(error);
+          })
+          .receive("timeout", () => {
+            reject();
+          });
+     })
+  };
+
   requestSupport = () => this.channel.push("events:request_support", {});
   favorite = () => this.channel.push("favorite", {});
   unfavorite = () => this.channel.push("unfavorite", {});

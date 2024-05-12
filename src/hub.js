@@ -654,6 +654,10 @@ function handleHubChannelJoined(entryManager, hubChannel, messageDispatch, data)
   (async () => {
     while (!scene.components["networked-scene"] || !scene.components["networked-scene"].data) await nextTick();
 
+    const user_sig = await hubChannel.trtcUserSig(data.session_id);
+    console.log("[session_id]", data.session_id);
+    console.log("[user_sig]", user_sig);
+
     const loadEnvironmentAndConnect = () => {
       console.log("Loading environment and connecting to dialog servers");
 
