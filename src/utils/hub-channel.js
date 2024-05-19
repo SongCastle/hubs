@@ -456,6 +456,25 @@ export default class HubChannel extends EventTarget {
     this.channel.push("kick", { session_id: sessionId });
   };
 
+  initTRTC = sessionId => {
+    return new Promise((resolve, reject) => {
+       this.channel
+         .push("init_trtc", { session_id: sessionId })
+         .receive("ok", (data) => {
+           console.log("[initTRTC] ok", data);
+           resolve(data);
+         })
+         .receive("error", error => {
+           console.error("[initTRTC] error", error);
+           reject(error);
+         })
+         .receive("timeout", () => {
+            console.info("[initTRTC] timeout", error);
+           reject();
+         });
+    })
+ };
+
   requestSupport = () => this.channel.push("events:request_support", {});
   favorite = () => this.channel.push("favorite", {});
   unfavorite = () => this.channel.push("unfavorite", {});

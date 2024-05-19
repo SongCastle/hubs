@@ -142,6 +142,7 @@
     "three-pathfinding": "^1.1.0",
     "three-to-ammo": "github:infinitelee/three-to-ammo",
     "troika-three-text": "^0.45.0",
+    "trtc-js-sdk": "^4.15.21",
     "url": "^0.11.1",
     "use-clipboard-copy": "^0.2.0",
     "uuid": "^3.2.1",
