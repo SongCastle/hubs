@@ -797,14 +797,23 @@ export class DialogAdapter extends EventEmitter {
       this._trtcClient.on('stream-added', (data) => {
         trtcDebug(`on: event "stream-added": ${data}`)
 
-        const streamType = data.stream.hasVideo() ? 'video' : 'audio';
-        const userId = data.stream.getUserId();
+        const remoteStream = data.stream;
+        const userId = remoteStream.getUserId();
 
         let userStream = this._trtcRemoteStreams.get(userId);
         if (!userStream) userStream = new Map();
 
-        userStream.set(streamType, data.stream);
+        let track;
+        if (remoteStream.hasVideo()) {
+          userStream.set('video', remoteStream);
+          track = remoteStream.getVideoTrack();
+        } else {
+          userStream.set('audio', remoteStream);
+          track = remoteStream.getAudioTrack()
+        }
+
         this._trtcRemoteStreams.set(userId, userStream);
+        this.resolvePendingMediaRequestForTrack(userId, track);
       })
 
       this._trtcClient.on('stream-updated', (data) => {
