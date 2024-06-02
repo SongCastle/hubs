@@ -382,6 +382,7 @@ export class DialogAdapter extends EventEmitter {
 
         case "peerBlocked": {
           const { peerId } = notification.data;
+          this.trtcMuteRemoteStream(clientId);
           document.body.dispatchEvent(new CustomEvent("blocked", { detail: { clientId: peerId } }));
 
           break;
@@ -389,6 +390,7 @@ export class DialogAdapter extends EventEmitter {
 
         case "peerUnblocked": {
           const { peerId } = notification.data;
+          this.trtcUnmuteRemoteStream(peerId);
           document.body.dispatchEvent(new CustomEvent("unblocked", { detail: { clientId: peerId } }));
 
           break;
@@ -1070,6 +1072,7 @@ export class DialogAdapter extends EventEmitter {
   block(clientId) {
     return this._protoo.request("block", { whom: clientId }).then(() => {
       this._blockedClients.set(clientId, true);
+      this.trtcMuteRemoteStream(clientId);
       document.body.dispatchEvent(new CustomEvent("blocked", { detail: { clientId: clientId } }));
     });
   }
@@ -1090,5 +1093,21 @@ export class DialogAdapter extends EventEmitter {
       second: "numeric"
     });
     this.scene.emit("rtc_event", { level, tag, time, msg: msgFunc() });
+  }
+
+  trtcMuteRemoteStream(clientId) {
+    const userStream = this._trtcRemoteStreams.get(clientId);
+    if (!userStream) return;
+
+    userStream.get("audio")?.muteAudio();
+    userStream.get("video")?.muteVideo();
+  }
+
+  trtcUnmuteRemoteStream(clientId) {
+    const userStream = this._trtcRemoteStreams.get(clientId);
+    if (!userStream) return;
+
+    userStream.get("audio")?.unmuteAudio();
+    userStream.get("video")?.unmuteVideo();
   }
 }
