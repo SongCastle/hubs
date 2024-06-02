@@ -839,6 +839,10 @@ export class DialogAdapter extends EventEmitter {
 
         this._trtcRemoteStreams.get(userId)?.delete(streamType);
       })
+
+      this._trtcClient.on('peer-leave', (data) => {
+        this._trtcRemoteStreams.delete(data.userId);
+      })
     } catch(e) {
       trtcError(`_trtcJoinRoom(): ${e}`);
     }
