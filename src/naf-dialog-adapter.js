@@ -642,6 +642,7 @@ export class DialogAdapter extends EventEmitter {
   async closeSendTransport() {
     if (this._trtcMicLocalStream) {
       this._trtcMicLocalStream.close();
+      await this._trtcClient?.unpublish(this._trtcMicLocalStream);
       this._trtcMicLocalStream = null;
     }
 
