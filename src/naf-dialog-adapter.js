@@ -46,7 +46,6 @@ export class DialogAdapter extends EventEmitter {
     super();
 
     this._micShouldBeEnabled = false;
-    this._shareProducer = null;
     this._localMediaStream = null;
     this._consumers = new Map();
     this._pendingMediaRequests = new Map();
@@ -515,29 +514,16 @@ export class DialogAdapter extends EventEmitter {
     let track;
 
     if (this._clientId === clientId) {
-      if (this._trtcLocalStream) {
-        if (kind === "audio") {
-          track = this._trtcLocalStream.getAudioTrack();
-        } else {
-          track = this._trtcLocalStream.getVideoTrack();
-        }
-      } else if (kind === "video") {
-        if (this._shareProducer && !this._shareProducer.closed) {
-          track = this._shareProducer.track;
-        }
+      if (kind === "audio") {
+        track = this._trtcLocalStream.getAudioTrack();
+      } else {
+        track = this._trtcLocalStream.getVideoTrack();
       }
     } else {
       if (kind === "audio") {
         track = this._trtcRemoteStreams.get(clientId)?.get("audio")?.getAudioTrack();
       } else {
         track = this._trtcRemoteStreams.get(clientId)?.get("video")?.getVideoTrack();
-        if (!track) {
-          this._consumers.forEach(consumer => {
-            if (consumer.appData.peerId === clientId && kind == consumer.track.kind) {
-              track = consumer.track;
-            }
-          });
-        }
       }
     }
 
@@ -921,43 +907,19 @@ export class DialogAdapter extends EventEmitter {
   }
 
   async enableShare(track) {
-    // stopTracks = false because otherwise the track will end during a temporary disconnect
-    this._shareProducer = await this._sendTransport.produce({
-      track,
-      stopTracks: false,
-      codecOptions: { videoGoogleStartBitrate: 1000 },
-      encodings: SCREEN_SHARING_SIMULCAST_ENCODINGS,
-      zeroRtpOnPause: true,
-      disableTrackOnPause: true,
-      appData: {
-        share: true
-      }
-    });
+    const localStream = await this.getTRTCLocalStream();
 
-    this._shareProducer.on("transportclose", () => {
-      this.emitRTCEvent("info", "RTC", () => `Desktop Share transport closed`);
-      this.disableShare();
-    });
-    this._shareProducer.observer.on("trackended", () => {
-      this.emitRTCEvent("info", "RTC", () => `Desktop Share transport track ended`);
-      this.disableShare();
-    });
+    if (localStream.hasVideo()) {
+      await localStream.replaceTrack(track);
+    } else {
+      await localStream.addTrack(track);
+    }
+    localStream.unmuteVideo();
   }
 
   async disableShare() {
-    if (!this._shareProducer) return;
-
-    this._shareProducer.close();
-
-    try {
-      if (!this._sendTransport.closed) {
-        await this._protoo.request("closeProducer", { producerId: this._shareProducer.id });
-      }
-    } catch (error) {
-      console.error(`disableShare(): ${error}`);
-    }
-
-    this._shareProducer = null;
+    if (this._trtcLocalStream?.hasVideo())
+      this._trtcLocalStream.muteVideo();
   }
 
   toggleMicrophone() {
@@ -1007,7 +969,6 @@ export class DialogAdapter extends EventEmitter {
     this._sendTransport = null;
     this._recvTransport && this._recvTransport.close();
     this._recvTransport = null;
-    this._shareProducer = null;
 
     this.trtcCleanUpState();
   }
